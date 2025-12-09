@@ -135,15 +135,15 @@ static_assert(sizeof(char16_t) == sizeof(wchar_t),
   NAPI_DISALLOW_ASSIGN(CLASS)                                                  \
   NAPI_DISALLOW_COPY(CLASS)
 
-#define NAPI_CHECK(condition, location, message)                               \
+#define NAPI_CHECK(env, condition, location, message)                          \
   do {                                                                         \
     if (!(condition)) {                                                        \
-      Napi::Error::Fatal((location), (message));                               \
+      Napi::Error::Fatal((env), (location), (message));                        \
     }                                                                          \
   } while (0)
 
-#define NAPI_FATAL_IF_FAILED(status, location, message)                        \
-  NAPI_CHECK((status) == napi_ok, location, message)
+#define NAPI_FATAL_IF_FAILED(env, status, location, message)                   \
+  NAPI_CHECK((env), (status) == napi_ok, location, message)
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Node-API C++ Wrapper Classes
@@ -1796,7 +1796,7 @@ class Error : public ObjectReference
   static Error New(napi_env env, const char* message);
   static Error New(napi_env env, const std::string& message);
 
-  static NAPI_NO_RETURN void Fatal(const char* location, const char* message);
+  static void Fatal(napi_env env, const char* location, const char* message);
 
   Error();
   Error(napi_env env, napi_value value);

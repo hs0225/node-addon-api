@@ -15,13 +15,14 @@ void ResetPromises(const CallbackInfo&) {
   promise_for_worker_thread_ = std::promise<void>();
 }
 
-void WaitForWorkerThread(const CallbackInfo&) {
+void WaitForWorkerThread(const CallbackInfo& info) {
+  
   std::future<void> future = promise_for_worker_thread_.get_future();
 
   std::future_status status = future.wait_for(std::chrono::seconds(5));
 
   if (status != std::future_status::ready) {
-    Error::Fatal("WaitForWorkerThread", "status != std::future_status::ready");
+    Error::Fatal(info.Env(), "WaitForWorkerThread", "status != std::future_status::ready");
   }
 }
 
@@ -42,7 +43,7 @@ void ReleaseAndWaitForChildProcess(const CallbackInfo& info,
   std::future_status status = future.wait_for(std::chrono::seconds(5));
 
   if (status != std::future_status::ready) {
-    Error::Fatal("ReleaseAndWaitForChildProcess",
+    Error::Fatal(info.Env(), "ReleaseAndWaitForChildProcess",
                  "status != std::future_status::ready");
   }
 }
@@ -313,15 +314,15 @@ void CatchAndRethrowErrorThatEscapesScope(const CallbackInfo& info) {
 
 #endif  // NAPI_CPP_EXCEPTIONS
 
-void ThrowFatalError(const CallbackInfo& /*info*/) {
-  Error::Fatal("Error::ThrowFatalError", "This is a fatal error");
+void ThrowFatalError(const CallbackInfo& info) {
+  Error::Fatal(info.Env(), "Error::ThrowFatalError", "This is a fatal error");
 }
 
 void ThrowDefaultError(const CallbackInfo& info) {
   napi_value dummy;
   napi_env env = info.Env();
   napi_status status = napi_get_undefined(env, &dummy);
-  NAPI_FATAL_IF_FAILED(status, "ThrowDefaultError", "napi_get_undefined");
+  NAPI_FATAL_IF_FAILED(env, status, "ThrowDefaultError", "napi_get_undefined");
 
   if (info[0].As<Boolean>().Value()) {
     // Provoke Node-API into setting an error, then use the `Napi::Error::New`
@@ -330,7 +331,7 @@ void ThrowDefaultError(const CallbackInfo& info) {
     uint32_t dummy_uint32;
     status = napi_get_value_uint32(env, dummy, &dummy_uint32);
     if (status == napi_ok) {
-      Error::Fatal("ThrowDefaultError", "napi_get_value_uint32");
+      Error::Fatal(env, "ThrowDefaultError", "napi_get_value_uint32");
     }
     // We cannot use `NAPI_THROW_IF_FAILED()` here because we do not wish
     // control to pass back to the engine if we throw an exception here and C++
@@ -343,7 +344,7 @@ void ThrowDefaultError(const CallbackInfo& info) {
   // have the effect of re-throwing the one above.
   status = napi_get_named_property(env, dummy, "xyzzy", &dummy);
   if (status == napi_ok) {
-    Error::Fatal("ThrowDefaultError", "napi_get_named_property");
+    Error::Fatal(env, "ThrowDefaultError", "napi_get_named_property");
   }
 
   ReleaseAndWaitForChildProcess(info, 1);

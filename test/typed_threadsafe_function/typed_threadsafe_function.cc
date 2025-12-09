@@ -47,7 +47,7 @@ static int ints[ARRAY_LENGTH];
 
 static void SecondaryThread() {
   if (s_tsfn.Release() != napi_ok) {
-    Error::Fatal("TypedSecondaryThread", "ThreadSafeFunction.Release() failed");
+    Error::Fatal(nullptr, "TypedSecondaryThread", "ThreadSafeFunction.Release() failed");
   }
 }
 
@@ -57,7 +57,7 @@ static void DataSourceThread() {
 
   if (info->startSecondary) {
     if (s_tsfn.Acquire() != napi_ok) {
-      Error::Fatal("TypedDataSourceThread",
+      Error::Fatal(nullptr, "TypedDataSourceThread",
                    "ThreadSafeFunction.Acquire() failed");
     }
 
@@ -104,21 +104,21 @@ static void DataSourceThread() {
         break;
 
       default:
-        Error::Fatal("TypedDataSourceThread",
+        Error::Fatal(nullptr, "TypedDataSourceThread",
                      "ThreadSafeFunction.*Call() failed");
     }
   }
 
   if (info->type == ThreadSafeFunctionInfo::NON_BLOCKING && !queueWasFull) {
-    Error::Fatal("TypedDataSourceThread", "Queue was never full");
+    Error::Fatal(nullptr, "TypedDataSourceThread", "Queue was never full");
   }
 
   if (info->abort && !queueWasClosing) {
-    Error::Fatal("TypedDataSourceThread", "Queue was never closing");
+    Error::Fatal(nullptr, "TypedDataSourceThread", "Queue was never closing");
   }
 
   if (!queueWasClosing && s_tsfn.Release() != napi_ok) {
-    Error::Fatal("TypedDataSourceThread",
+    Error::Fatal(nullptr, "TypedDataSourceThread",
                  "ThreadSafeFunction.Release() failed");
   }
 }
@@ -175,9 +175,9 @@ static Value StartThreadInternal(const CallbackInfo& info,
   return Value();
 }
 
-static Value Release(const CallbackInfo& /* info */) {
+static Value Release(const CallbackInfo& info) {
   if (s_tsfn.Release() != napi_ok) {
-    Error::Fatal("Release", "TypedThreadSafeFunction.Release() failed");
+    Error::Fatal(info.Env(), "Release", "TypedThreadSafeFunction.Release() failed");
   }
   return Value();
 }
